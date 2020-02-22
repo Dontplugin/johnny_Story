@@ -1,0 +1,42 @@
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+.mvn
+
+### NetBeans ###
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+*/target
+*.cmd
+mvnw
+cluster/src/main/resources/
+cluster/src/test/
+common/src/
+config/src/
+extension/src/
+filter/src/
+lu-netty-remoting/src/
+proxy/src/
+raft-register/src/
+remoting/src/
+serializer/src/
+serviceMesh/src/
