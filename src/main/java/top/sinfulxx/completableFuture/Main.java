@@ -1,11 +1,11 @@
 package top.sinfulxx.completableFuture;
 
+import com.google.common.collect.Lists;
 import top.sinfulxx.completableFuture.service.Task;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * java 8 CompletableFuture异步编程使用示例
@@ -36,5 +36,11 @@ public class Main {
         System.out.println("开始转账...");
         task.transfer(a, b, 50).thenRun(() -> System.out.println("转账完成! 耗时: " + (System.currentTimeMillis() - startA)));
         System.out.println("其他操作...");
+
+        List<String> list = Lists.newArrayList("1", "2");
+        Callable<List<String>> runnable = () -> list.stream().map(item -> "ok" + item).collect(Collectors.toList());
+
+        ExecutorService es = Executors.newFixedThreadPool(10);
+        Future<List<String>> submit = es.submit(runnable);
     }
 }
