@@ -1,4 +1,4 @@
-package top.sinfulxx.AtomicReference;
+package top.sinfulxx.atomicReference;
 
 public class SimpleObject {
     private String name;

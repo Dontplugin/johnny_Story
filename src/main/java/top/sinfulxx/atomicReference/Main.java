@@ -1,4 +1,4 @@
-package top.sinfulxx.AtomicReference;
+package top.sinfulxx.atomicReference;
 
 import java.util.concurrent.atomic.AtomicReference;
 
