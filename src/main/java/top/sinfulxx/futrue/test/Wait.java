@@ -10,7 +10,7 @@ public class Wait {
     public synchronized void scan() {
         for (int i = 0; i < 100; i++) {
             try {
-                System.out.println(i);
+                System.out.println(Thread.currentThread().getName() + " : " + i);
                 Thread.sleep(500);
                 if (i == 6) {
                     wait();

@@ -15,7 +15,14 @@ public class WaitMain {
 
     public static void main(String[] args) {
         final Wait wait = new Wait();
-        new Thread() {
+        new Thread("1") {
+            @Override
+            public void run() {
+                wait.scan();
+            }
+        }.start();
+
+        new Thread("2") {
             @Override
             public void run() {
                 wait.scan();
