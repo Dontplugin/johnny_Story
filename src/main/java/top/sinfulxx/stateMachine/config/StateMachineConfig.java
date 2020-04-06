@@ -3,6 +3,8 @@ package top.sinfulxx.stateMachine.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.statemachine.annotation.OnTransition;
+import org.springframework.statemachine.annotation.WithStateMachine;
 import org.springframework.statemachine.config.EnableStateMachine;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
@@ -22,6 +24,7 @@ import java.util.EnumSet;
  * @since 1.0
  */
 @Slf4j
+@WithStateMachine
 @Configuration
 @EnableStateMachine
 public class StateMachineConfig extends EnumStateMachineConfigurerAdapter<States, Events> {
@@ -48,14 +51,22 @@ public class StateMachineConfig extends EnumStateMachineConfigurerAdapter<States
                 .event(Events.RECEIVE);
     }
 
-    @Override
-    public void configure(StateMachineConfigurationConfigurer<States, Events> config)
-            throws Exception {
-        config
-                .withConfiguration()
-                .listener(listener());
+    @OnTransition(target = "UNPAID")
+    public void create() {
+        log.info("订单创建，待支付");
     }
 
+    @OnTransition(source = "UNPAID", target = "WAITING_FOR_RECEIVE")
+    public void pay() {
+        log.info("用户完成支付，待收货");
+    }
+
+    @OnTransition(source = "WAITING_FOR_RECEIVE", target = "DONE")
+    public void receive() {
+        log.info("用户已收货，订单完成");
+    }
+
+/*
     @Bean
     public StateMachineListener<States, Events> listener() {
         return new StateMachineListenerAdapter<States, Events>() {
@@ -81,6 +92,6 @@ public class StateMachineConfig extends EnumStateMachineConfigurerAdapter<States
             }
 
         };
-    }
+    }*/
 
 }
