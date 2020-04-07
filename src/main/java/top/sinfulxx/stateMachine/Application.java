@@ -12,20 +12,20 @@ import org.springframework.statemachine.StateMachine;
  * @since 1.0
  */
 @SpringBootApplication
-public class Application implements CommandLineRunner {
+public class Application /*implements CommandLineRunner*/ {
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
-
-    @Autowired
-    private StateMachine<States, Events> stateMachine;
-
-    @Override
-    public void run(String... args) throws Exception {
-        stateMachine.start();
-        stateMachine.sendEvent(Events.PAY);
-        stateMachine.sendEvent(Events.RECEIVE);
-    }
+//
+//    @Autowired
+//    private StateMachine<OrderStatus, Events> stateMachine;
+//
+//    @Override
+//    public void run(String... args) throws Exception {
+//        stateMachine.start();
+//        stateMachine.sendEvent(Events.PAY);
+//        stateMachine.sendEvent(Events.RECEIVE);
+//    }
 
 }

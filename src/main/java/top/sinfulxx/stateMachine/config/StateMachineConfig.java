@@ -3,18 +3,20 @@ package top.sinfulxx.stateMachine.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.statemachine.annotation.OnTransition;
+import org.springframework.statemachine.StateMachineContext;
+import org.springframework.statemachine.StateMachinePersist;
 import org.springframework.statemachine.annotation.WithStateMachine;
 import org.springframework.statemachine.config.EnableStateMachine;
+import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.EnumStateMachineConfigurerAdapter;
-import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineTransitionConfigurer;
-import org.springframework.statemachine.listener.StateMachineListener;
-import org.springframework.statemachine.listener.StateMachineListenerAdapter;
-import org.springframework.statemachine.transition.Transition;
-import top.sinfulxx.stateMachine.Events;
-import top.sinfulxx.stateMachine.States;
+import org.springframework.statemachine.persist.DefaultStateMachinePersister;
+import org.springframework.statemachine.persist.StateMachinePersister;
+import org.springframework.statemachine.support.DefaultStateMachineContext;
+import top.sinfulxx.stateMachine.OrderStatus;
+import top.sinfulxx.stateMachine.OrderStatusChangeEvent;
+import top.sinfulxx.stateMachine.entity.Order;
 
 import java.util.EnumSet;
 
@@ -26,72 +28,58 @@ import java.util.EnumSet;
 @Slf4j
 @WithStateMachine
 @Configuration
-@EnableStateMachine
-public class StateMachineConfig extends EnumStateMachineConfigurerAdapter<States, Events> {
-
+@EnableStateMachineFactory(name = "orderStateMachineFactory")
+public class StateMachineConfig extends EnumStateMachineConfigurerAdapter<OrderStatus, OrderStatusChangeEvent> {
+    /**订单状态机ID*/
+    public static final String orderStateMachineId = "orderStateMachineId";
+    /**
+     * 配置状态
+     * @param states
+     * @throws Exception
+     */
     @Override
-    public void configure(StateMachineStateConfigurer<States, Events> states)
-            throws Exception {
+    public void configure(StateMachineStateConfigurer<OrderStatus, OrderStatusChangeEvent> states) throws Exception {
         states
                 .withStates()
-                .initial(States.UNPAID)
-                .states(EnumSet.allOf(States.class));
+                .initial(OrderStatus.WAIT_PAYMENT)
+                .states(EnumSet.allOf(OrderStatus.class));
     }
 
+    /**
+     * 配置状态转换事件关系
+     * @param transitions
+     * @throws Exception
+     */
     @Override
-    public void configure(StateMachineTransitionConfigurer<States, Events> transitions)
-            throws Exception {
+    public void configure(StateMachineTransitionConfigurer<OrderStatus, OrderStatusChangeEvent> transitions) throws Exception {
         transitions
-                .withExternal()
-                .source(States.UNPAID).target(States.WAITING_FOR_RECEIVE)
-                .event(Events.PAY)
+                .withExternal().source(OrderStatus.WAIT_PAYMENT).target(OrderStatus.WAIT_DELIVER).event(OrderStatusChangeEvent.PAYED)
                 .and()
-                .withExternal()
-                .source(States.WAITING_FOR_RECEIVE).target(States.DONE)
-                .event(Events.RECEIVE);
+                .withExternal().source(OrderStatus.WAIT_DELIVER).target(OrderStatus.WAIT_RECEIVE).event(OrderStatusChangeEvent.DELIVERY)
+                .and()
+                .withExternal().source(OrderStatus.WAIT_RECEIVE).target(OrderStatus.FINISH).event(OrderStatusChangeEvent.RECEIVED);
     }
 
-    @OnTransition(target = "UNPAID")
-    public void create() {
-        log.info("订单创建，待支付");
-    }
-
-    @OnTransition(source = "UNPAID", target = "WAITING_FOR_RECEIVE")
-    public void pay() {
-        log.info("用户完成支付，待收货");
-    }
-
-    @OnTransition(source = "WAITING_FOR_RECEIVE", target = "DONE")
-    public void receive() {
-        log.info("用户已收货，订单完成");
-    }
-
-/*
+    /**
+     * 持久化配置
+     * 实际使用中，可以配合redis等，进行持久化操作
+     * @return
+     */
     @Bean
-    public StateMachineListener<States, Events> listener() {
-        return new StateMachineListenerAdapter<States, Events>() {
-
+    public StateMachinePersister<OrderStatus, OrderStatusChangeEvent, Order> persister(){
+        return new DefaultStateMachinePersister<>(new StateMachinePersist<OrderStatus, OrderStatusChangeEvent, Order>() {
             @Override
-            public void transition(Transition<States, Events> transition) {
-                if(transition.getTarget().getId() == States.UNPAID) {
-                    log.info("订单创建，待支付");
-                    return;
-                }
-
-                if(transition.getSource().getId() == States.UNPAID
-                        && transition.getTarget().getId() == States.WAITING_FOR_RECEIVE) {
-                    log.info("用户完成支付，待收货");
-                    return;
-                }
-
-                if(transition.getSource().getId() == States.WAITING_FOR_RECEIVE
-                        && transition.getTarget().getId() == States.DONE) {
-                    log.info("用户已收货，订单完成");
-                    return;
-                }
+            public void write(StateMachineContext<OrderStatus, OrderStatusChangeEvent> context, Order order) throws Exception {
+                //此处并没有进行持久化操作
+                order.setStatus(context.getState());
             }
 
-        };
-    }*/
-
+            @Override
+            public StateMachineContext<OrderStatus, OrderStatusChangeEvent> read(Order order) throws Exception {
+                //此处直接获取order中的状态，其实并没有进行持久化读取操作
+                StateMachineContext<OrderStatus, OrderStatusChangeEvent> result =new DefaultStateMachineContext<>(order.getStatus(), null, null, null, null, orderStateMachineId);
+                return result;
+            }
+        });
+    }
 }
